@@ -349,12 +349,35 @@ def create_template_layout():
     return farm
 
 
+# splits route into segments between waypoints
+def split_route_into_segments(route, waypoints):
+    if not route or not waypoints:
+        return []
+
+    segments = []
+    route_list = list(route)
+    current_segment = [route_list[0]]
+    waypoint_idx = 0
+
+    for i in range(1, len(route_list)):
+        current_segment.append(route_list[i])
+
+        if waypoint_idx < len(waypoints) and route_list[i] == waypoints[waypoint_idx]:
+            segments.append(current_segment)
+            current_segment = [route_list[i]]
+            waypoint_idx += 1
+
+    if len(current_segment) > 1:
+        segments.append(current_segment)
+
+    return segments
+
 # visualizes ant colony optimization with animated pathfinding
 def visualize_ant_farm(farm, iterations=100): # change interations to add or shorten tests
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
-    
+
     iter_count = [0]
-    colors = ['red', 'blue', 'green', 'orange', 'purple', 'cyan']
+    colors = ['red', 'blue', 'green', 'orange', 'purple', 'cyan', 'magenta', 'yellow']
     
     def update(frame):
         if iter_count[0] >= iterations:
@@ -389,18 +412,28 @@ def visualize_ant_farm(farm, iterations=100): # change interations to add or sho
             ax2.imshow(pher_disp, cmap='YlOrRd', alpha=0.8)
             ax2.imshow(farm.obstacles, cmap='Greys', alpha=0.3)
             ax2.set_title(f'Best Route: {farm.best_route_length:.0f} steps', fontsize=14)
-            
+
             if farm.best_route:
-                ba = np.array(farm.best_route)
-                ax2.plot(ba[:, 1], ba[:, 0], 'lime', linewidth=3, label='Best Route')
-                
+                # split route into colored segments
+                waypoints = farm.ends.copy()
+                if farm.return_to_start:
+                    waypoints.append(farm.start)
+                segments = split_route_into_segments(farm.best_route, waypoints)
+
+                for seg_idx, segment in enumerate(segments):
+                    if len(segment) > 1:
+                        seg_array = np.array(segment)
+                        color = colors[seg_idx % len(colors)]
+                        ax2.plot(seg_array[:, 1], seg_array[:, 0], color=color,
+                                linewidth=3, label=f'Segment {seg_idx+1}')
+
                 for idx in range(len(farm.ends)):
                     if idx < len(farm.ends):
                         e = farm.ends[idx]
                         ax2.plot(e[1], e[0], 'ro', markersize=12)
-                        ax2.text(e[1]+1, e[0]+1, str(idx+1), color='white', 
+                        ax2.text(e[1]+1, e[0]+1, str(idx+1), color='white',
                                 fontsize=12, fontweight='bold')
-            
+
             ax2.plot(farm.start[1], farm.start[0], 'go', markersize=15, label='Start')
             if farm.return_to_start:
                 ax2.text(farm.start[1]+1, farm.start[0]+1, 'S/E', color='white',
