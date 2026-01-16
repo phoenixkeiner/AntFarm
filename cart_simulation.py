@@ -3,7 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
-from ant_farm_optimizer import AntFarm, visualize_ant_farm
+from ant_farm_optimizer import AntFarm, visualize_ant_farm, split_route_into_segments
 
 
 def create_warehouse_with_carts(scale=2):
@@ -43,6 +43,7 @@ def visualize_cart_paths(farm, iterations=100): # change the numbe of interation
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(18, 14))
     iter_count = [0]
     colorbar_ref = [None]
+    colors = ['red', 'blue', 'green', 'orange', 'purple', 'cyan', 'magenta', 'yellow']
 
     def update(frame):
         if iter_count[0] >= iterations:
@@ -75,8 +76,21 @@ def visualize_cart_paths(farm, iterations=100): # change the numbe of interation
         ax2.imshow(farm.obstacles, cmap='Greys', alpha=0.3)
         ax2.set_title(f'Best Route: {farm.best_route_length:.0f} steps', fontsize=12)
         if farm.best_route:
+            # split route into colored segments
+            waypoints = farm.ends.copy()
+            if farm.return_to_start:
+                waypoints.append(farm.start)
+            segments = split_route_into_segments(farm.best_route, waypoints)
+
+            for seg_idx, segment in enumerate(segments):
+                if len(segment) > 1:
+                    seg_array = np.array(segment)
+                    color = colors[seg_idx % len(colors)]
+                    ax2.plot(seg_array[:, 1], seg_array[:, 0], color=color,
+                            linewidth=3, label=f'Segment {seg_idx+1}')
+
+            # show cart footprint at key positions
             ba = np.array(farm.best_route)
-            ax2.plot(ba[:, 1], ba[:, 0], 'lime', linewidth=3, label='Optimal Path')
             for i in [0, len(ba)//3, 2*len(ba)//3, -1]:
                 if i < len(ba):
                     pos = ba[i]
