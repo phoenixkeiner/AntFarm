@@ -103,7 +103,7 @@ def create_from_csv_file(fn='floor_layout.csv'):
 def create_interactive_layout():
     print("\n4: Interactive Builder")
     print("click to add obstacles")
-    print("press 's' for start, 'e' for end, numbers '3-9' for additional ends")
+    print("press 't' for start, 'e' for end, numbers '3-9' for additional ends")
     print("press 'c' to clear, close window when done")
     
     gs = (30, 40)
@@ -111,7 +111,7 @@ def create_interactive_layout():
     
     fig, ax = plt.subplots(figsize=(12, 9))
     im = ax.imshow(layout, cmap='tab10', vmin=0, vmax=9)
-    ax.set_title("click=obstacle | s=start | e=end1 | 3-9=end2-8 | c=clear")
+    ax.set_title("click=obstacle | t=start | e=end1 | 3-9=end2-8 | c=clear")
     ax.grid(True, alpha=0.3)
     
     mode = [1]
@@ -132,7 +132,7 @@ def create_interactive_layout():
                 fig.canvas.draw()
     
     def onkey(event):
-        if event.key == 's':
+        if event.key == 't':
             mode[0] = 2
             ax.set_title("start mode")
         elif event.key == 'e':
