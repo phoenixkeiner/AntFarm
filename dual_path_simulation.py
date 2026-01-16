@@ -321,6 +321,9 @@ def create_warehouse_dual(scale=2):
     print(f"People: no size constraints")
 
     farm = DualPathFarm(grid_size=(h, w), cart_size=(cart_h, cart_w))
+    # Adjust num_ants for accuracy vs speed
+    # Lower values (10-20) = faster but less accurate
+    # Higher values (50-100) = slower but more accurate
     farm.num_ants = 50
 
     start_pos = (10, 10)
@@ -428,6 +431,10 @@ def visualize_dual_paths(farm, iterations=150):
                     color = colors[seg_idx % len(colors)]
                     ax3.plot(seg_array[:, 1], seg_array[:, 0], color=color,
                             linewidth=2, label=f'Seg {seg_idx+1}')
+        ax3.plot(farm.start[1], farm.start[0], 'go', markersize=12)
+        for idx, e in enumerate(farm.ends):
+            ax3.plot(e[1], e[0], 'ro', markersize=10)
+            ax3.text(e[1]+2, e[0]+2, str(idx+1), color='white', fontsize=10, fontweight='bold')
         ax3.legend(fontsize=8)
         ax3.grid(True, alpha=0.2)
 
@@ -450,6 +457,10 @@ def visualize_dual_paths(farm, iterations=150):
                     color = colors[seg_idx % len(colors)]
                     ax4.plot(seg_array[:, 1], seg_array[:, 0], color=color,
                             linewidth=2, label=f'Seg {seg_idx+1}')
+        ax4.plot(farm.start[1], farm.start[0], 'go', markersize=12)
+        for idx, e in enumerate(farm.ends):
+            ax4.plot(e[1], e[0], 'ro', markersize=10)
+            ax4.text(e[1]+2, e[0]+2, str(idx+1), color='white', fontsize=10, fontweight='bold')
         ax4.legend(fontsize=8)
         ax4.grid(True, alpha=0.2)
 
@@ -488,6 +499,8 @@ def print_dual_analysis(farm):
 
 if __name__ == "__main__":
     # Set number of iterations here
+    # Lower values (10-50) = faster but less optimized
+    # Higher values (100-200) = slower but more optimized
     ITERATIONS = 150
 
     print("Dual Pathfinding: People vs Carts")

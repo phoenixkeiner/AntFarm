@@ -239,6 +239,41 @@ Set return_to_start=True to return to the starting point after visiting all endp
 
 Example: Delivery truck visiting stops 1, 2, 3, then returning to depot.
 
+## Speed vs Accuracy Adjustment
+
+All simulation files have two key parameters you can adjust for faster/slower and less/more accurate results:
+
+### 1. Number of Ants (num_ants)
+Controls how many paths are tested each iteration:
+- **Fast mode (10-20 ants)**: Quick results, good for testing layouts
+- **Balanced mode (30-50 ants)**: Good balance of speed and accuracy
+- **Accurate mode (50-100 ants)**: Slower, finds better paths
+
+Example in code:
+```python
+farm.num_ants = 20  # Change this value
+```
+
+### 2. Number of Iterations (ITERATIONS)
+Controls how many rounds of optimization to run:
+- **Fast mode (10-50 iterations)**: Quick preview, may not find optimal path
+- **Balanced mode (50-100 iterations)**: Usually sufficient for most layouts
+- **Thorough mode (100-200 iterations)**: Best results for complex layouts
+
+Example at bottom of each file:
+```python
+ITERATIONS = 10  # Change this value
+```
+
+### Speed Comparison
+- **ant_farm_optimizer.py**: Default 10 iterations, 50 ants = FAST
+- **cart_routes_visualization.py**: Default 10 iterations, 20 ants = FAST
+- **cart_simulation.py**: Default 10 iterations, 50 ants = FAST
+- **dual_path_simulation.py**: Default 150 iterations, 50 ants = SLOW
+- **dual_path_template.py**: Default 150 iterations, 50 ants = SLOW
+
+**Tip**: Start with fast settings (10 iterations, 20 ants) to test your layout. Once you're happy with it, increase to 100 iterations and 50 ants for final optimization.
+
 ## Parameter Adjustment
 
 Open ant_farm_optimizer.py and modify these values in the AntFarm class:
@@ -249,8 +284,6 @@ self.evaporation_rate = 0.1     # higher values forget old paths faster
 self.alpha = 1.0                # how much ants follow pheromone trails
 self.beta = 2.0                 # how much ants prefer shorter distances
 ```
-
-Run more iterations for complex layouts. Change the number in visualize_ant_farm(farm, iterations=150) at the bottom of the file. Try 200-500 for complex layouts.
 
 ## Measurement Conversion
 

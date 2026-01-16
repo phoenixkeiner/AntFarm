@@ -18,7 +18,10 @@ def create_warehouse_with_carts(scale=2):
     print(f"Actual warehouse: {h/(2*scale)}ft x {w/(2*scale)}ft")
 
     farm = AntFarm(grid_size=(h, w), cart_size=(cart_h, cart_w))
-    farm.num_ants = 50 # higher the number the more accurate the tests will be.
+    # Adjust num_ants for accuracy vs speed tradeoff
+    # Lower values (10-20) = faster but less accurate
+    # Higher values (50-100) = slower but more accurate
+    farm.num_ants = 50
     farm.segment_by_segment = True # optimize each leg independently
 
     start_pos = (10, 10)
@@ -118,6 +121,10 @@ def visualize_cart_paths(farm, iterations=150):
                     y, x = bn['position']
                     ax3.plot(x, y, 'c*', markersize=15, markeredgecolor='blue', markeredgewidth=1)
                     ax3.text(x+2, y, f"{bn['traffic_count']}", color='cyan', fontsize=8, fontweight='bold')
+        ax3.plot(farm.start[1], farm.start[0], 'go', markersize=12)
+        for idx, e in enumerate(farm.ends):
+            ax3.plot(e[1], e[0], 'ro', markersize=10)
+            ax3.text(e[1]+2, e[0]+2, str(idx+1), color='white', fontsize=10, fontweight='bold')
         if colorbar_ref[0] is None:
             colorbar_ref[0] = plt.colorbar(im, ax=ax3, label='Cart Passes')
         else:
@@ -210,6 +217,8 @@ def print_detailed_analysis(farm):
 
 if __name__ == "__main__":
     # Set number of iterations here
+    # Lower values (10-50) = faster but less optimized
+    # Higher values (100-200) = slower but more optimized
     ITERATIONS = 10
 
     print("Warehouse Cart Pathfinding Simulation")

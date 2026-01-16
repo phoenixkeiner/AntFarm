@@ -437,6 +437,10 @@ def visualize_dual_paths(farm, iterations=150):
                     color = colors[seg_idx % len(colors)]
                     ax3.plot(seg_array[:, 1], seg_array[:, 0], color=color,
                             linewidth=3, label=f'Seg {seg_idx+1}')
+        ax3.plot(farm.start[1], farm.start[0], 'go', markersize=12)
+        for idx, e in enumerate(farm.ends):
+            ax3.plot(e[1], e[0], 'ro', markersize=10)
+            ax3.text(e[1]+1, e[0]+1, str(idx+1), color='white', fontsize=10, fontweight='bold')
         ax3.legend(fontsize=8)
         ax3.grid(True, alpha=0.3)
 
@@ -465,6 +469,10 @@ def visualize_dual_paths(farm, iterations=150):
             cart_rect = Rectangle((ba[0][1], ba[0][0]), farm.cart_size[1], farm.cart_size[0],
                                 fill=False, edgecolor='yellow', linewidth=2)
             ax4.add_patch(cart_rect)
+        ax4.plot(farm.start[1], farm.start[0], 'go', markersize=12)
+        for idx, e in enumerate(farm.ends):
+            ax4.plot(e[1], e[0], 'ro', markersize=10)
+            ax4.text(e[1]+1, e[0]+1, str(idx+1), color='white', fontsize=10, fontweight='bold')
         ax4.legend(fontsize=8)
         ax4.grid(True, alpha=0.3)
 
@@ -479,6 +487,8 @@ def visualize_dual_paths(farm, iterations=150):
 
 if __name__ == "__main__":
     # Set number of iterations here
+    # Lower values (10-50) = faster but less optimized
+    # Higher values (100-200) = slower but more optimized
     ITERATIONS = 150
 
     print("Dual Pathfinding: People vs Carts (Template)")

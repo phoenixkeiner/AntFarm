@@ -14,7 +14,10 @@ class AntFarm:
         self.ants = []
         self.best_paths = {}
         self.best_path_lengths = {}
-        self.num_ants = 50 # this number sets the accuracy of the test
+        # Adjust num_ants for accuracy vs speed
+        # Lower values (10-20) = faster but less accurate
+        # Higher values (50-100) = slower but more accurate
+        self.num_ants = 50
         self.evaporation_rate = 0.1
         self.pheromone_deposit = 100
         self.alpha = 1.0
@@ -558,6 +561,8 @@ def visualize_ant_farm(farm, iterations=150):
 
 if __name__ == "__main__":
     # Set number of iterations here
+    # Lower values (10-50) = faster but less optimized
+    # Higher values (100-200) = slower but more optimized
     ITERATIONS = 10
 
     print("Ant Farm!!")
