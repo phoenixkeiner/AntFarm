@@ -18,16 +18,16 @@ This ant colony optimization program finds the best paths through your productio
 
 2. **Run the example:**
    ```bash
-   python ant_farm_optimizer.py
+   python ant_farm.py
    ```
-   
+
    This displays a working example with a sample production floor layout.
 
 ## Creating Your Own Layout
 
 ### 1: Modify the Template Function
 
-Edit the `create_template_layout()` function in `ant_farm_optimizer.py`:
+Edit the `create_template_layout()` function in `ant_farm.py`:
 
 ```python
 def create_template_layout():
@@ -77,7 +77,7 @@ f.return_to_start = False
 
 ### 3: Create from Floor Plan Image
 
-See `custom_layout_example.py` for complete examples.
+See `custom_layout.py` for complete examples.
 
 ## Routing Modes
 
@@ -144,10 +144,9 @@ The program shows two panels:
 
 In sequential mode, all ants follow the same color because they all visit endpoints in the same order.
 
-**Right Panel - Pheromone Map:**
-- Red/Yellow colors: Pheromone strength (red = higher)
+**Right Panel - Best Routes:**
 - Colored lines: Best paths found to each endpoint (parallel mode)
-- Green line: Best complete route (sequential mode)
+- Colored segments: Best complete route (sequential mode)
 - Numbers show visit order in sequential mode
 
 **Path Length:**

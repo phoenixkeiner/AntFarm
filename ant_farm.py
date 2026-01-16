@@ -32,11 +32,9 @@ class AntFarm:
 
         # cart dimensions (height, width) for collision detection
         self.cart_size = cart_size if cart_size else (1, 1)
-        self.traffic_heatmap = np.zeros(grid_size, dtype=int)
-        self.bottlenecks = []
         self.all_routes = []
 
-        # separate pheromones and best paths for people vs thicc bois
+        # separate pheromones and best paths for people vs carts
         self.pheromone_people = np.ones(grid_size) * 0.1
         self.pheromone_carts = np.ones(grid_size) * 0.1
         self.best_route_people = None
@@ -233,81 +231,15 @@ class AntFarm:
 
         for route in routes:
             if route:
-                # routes for traffic analysis
                 self.all_routes.append(route)
 
                 deposit = self.pheromone_deposit / len(route)
                 for pos in route:
                     self.pheromone[pos] += deposit
-                    # track traffic through each cell
-                    self.traffic_heatmap[pos] += 1
 
                 if len(route) < self.best_route_length:
                     self.best_route_length = len(route)
                     self.best_route = route
-    
-    # detects bottlenecks where paths narrow and traffic concentrates
-    def detect_bottlenecks(self, threshold=None):
-        if threshold is None:
-            threshold = len(self.all_routes) * 0.3
-
-        self.bottlenecks = []
-
-        # find cells with high traffic
-        high_traffic = np.where(self.traffic_heatmap > threshold)
-
-        for i in range(len(high_traffic[0])):
-            y, x = high_traffic[0][i], high_traffic[1][i]
-
-            # count passable neighbors
-            cart_h, cart_w = self.cart_size
-            neighbors = 0
-            for dy in [-1, 0, 1]:
-                for dx in [-1, 0, 1]:
-                    ny, nx = y + dy, x + dx
-                    if (0 <= ny < self.grid_size[0] and
-                        0 <= nx < self.grid_size[1] and
-                        not self.obstacles[ny, nx] and
-                        not self.check_cart_collision((ny, nx))):
-                        neighbors += 1
-
-            # bottleneck if high traffic + few neighbors
-            if neighbors <= 4:
-                self.bottlenecks.append({
-                    'position': (y, x),
-                    'traffic_count': int(self.traffic_heatmap[y, x]),
-                    'clearance': neighbors
-                })
-
-        return self.bottlenecks
-
-    # analyzes route conflicts where multiple carts use same cells
-    def analyze_route_conflicts(self, time_window=10):
-        conflicts = []
-
-        # simulate carts moving along their routes simultaneously
-        for t in range(time_window):
-            occupied = {}
-
-            for route_idx, route in enumerate(self.all_routes[-20:]):
-                if t < len(route):
-                    pos = route[t]
-
-                    # check cart footprint at this position
-                    cart_h, cart_w = self.cart_size
-                    for dy in range(cart_h):
-                        for dx in range(cart_w):
-                            cell = (pos[0] + dy, pos[1] + dx)
-                            if cell in occupied:
-                                conflicts.append({
-                                    'time': t,
-                                    'position': cell,
-                                    'routes': [occupied[cell], route_idx]
-                                })
-                            else:
-                                occupied[cell] = route_idx
-
-        return conflicts
 
     # optimizes each segment independently
     def run_iteration_segment_by_segment(self):
@@ -381,8 +313,6 @@ class AntFarm:
                     paths_by_target[target].append(path)
                     if path:
                         self.all_routes.append(path)
-                        for pos in path:
-                            self.traffic_heatmap[pos] += 1
 
             self.update_pheromones(paths_by_target)
             return paths_by_target

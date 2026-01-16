@@ -6,7 +6,7 @@ This program finds the best routes through the production floor using ant colony
 
 ### Core Files
 
-**ant_farm_optimizer.py** - Main ant colony optimization engine
+**ant_farm.py** - Main ant colony optimization engine
 - Contains the AntFarm class with all pathfinding logic
 - Implements ant colony optimization algorithm with pheromone tracking
 - Supports both parallel mode, independent paths to each endpoint and sequential mode for an ordered route through all endpoints.
@@ -14,54 +14,38 @@ This program finds the best routes through the production floor using ant colony
 - Has template layout function that can be modified
 - Run this file directly to see the example template in action
 
-**custom_layout_example.py** - Four methods to build your own layout
-- Method 1: Direct code layout using add_obstacle function
-- Method 2: Array layout using numpy arrays
+**custom_layout.py** - Four methods to build your own layout
+- Method 1: Array layout using numpy arrays
+- Method 2: Direct code layout using add_obstacle function
 - Method 3: CSV file import from spreadsheet
 - Method 4: Interactive layout builder (click to place obstacles and endpoints)
 - Run this file and choose which method to use
 
-**cart_simulation.py** - Complete warehouse simulation for 3ft x 5ft carts
-- Designed for real warehouse cart pathfinding
-- Includes cart collision detection based on physical cart dimensions
-- Shows 4 panels: current routes, best path with cart visualization, traffic heatmap with bottleneck detection and statistics
-- Analyzes bottlenecks where paths narrow
-- Detects route conflicts where multiple carts would collide
-- Provides traffic congestion analysis
-- Run this to simulate warehouse cart movements
-
-**cart_routes_visualization.py** - Route finding visualization for carts
+**cart_visualization.py** - Route finding visualization for carts
 - Shows 2 panels: current routes being tested and best route found
 - Displays cart footprint at key positions along the route
 - Color-coded route segments for sequential pathfinding
-- Focused on route optimization without traffic analysis
+- Designed for real warehouse cart pathfinding with 3ft x 5ft carts
 - Run this for quick route visualization
 
-**cart_heatmap_visualization.py** - Traffic analysis and bottleneck detection
-- Shows 2 panels: traffic heatmap and detailed statistics
-- Identifies congestion points with traffic counts
-- Detects potential collision zones between carts
-- Provides recommendations for aisle widening and traffic control
-- Run this for traffic pattern analysis
-
-**dual_path_simulation.py** - Simultaneous pathfinding for people and carts
+**ants_and_carts.py** - Simultaneous pathfinding for people and carts
 - Runs two separate pathfinding algorithms at the same time
 - People paths (blue): no size constraints, can use narrow spaces
 - Cart paths (orange): must account for 3ft x 5ft cart size
-- Shows 4 panels: all routes overlay, best paths comparison, people pheromone map, cart pheromone map
+- Shows 4 panels: all routes overlay, best paths comparison, people route, cart route
 - Calculates and displays the extra distance carts need compared to people
 - Uses separate pheromone maps so people and carts don't interfere with each other
 - Full warehouse layout with realistic dimensions
 
-**dual_path_template.py** - Dual pathfinding with simple template layout
-- Same dual pathfinding as dual_path_simulation.py but with smaller test layout
+**ants_and_carts_templates.py** - Dual pathfinding with simple template layout
+- Same dual pathfinding as ants_and_carts.py but with smaller test layout
 - Faster to run for quick testing
 - Good for understanding how dual pathfinding works before running full warehouse simulation
 
 ### Support Files
 
 **floor_layout_template.csv** - Spreadsheet template for layouts
-- Use with custom_layout_example.py method 3
+- Use with custom_layout.py method 3
 - Edit in Excel or any spreadsheet program
 - 0 = open space, 1 = obstacle, 2 = start point, 3-9 = endpoints
 
@@ -93,9 +77,9 @@ This program finds the best routes through the production floor using ant colony
    ```
    - Run any of the Python files:
    ```
-   python ant_farm_optimizer.py
-   python cart_simulation.py
-   python dual_path_simulation.py
+   python ant_farm.py
+   python cart_visualization.py
+   python ants_and_carts.py
    ```
 
 ### Mac Installation
@@ -123,9 +107,9 @@ This program finds the best routes through the production floor using ant colony
    ```
    - Run any of the Python files:
    ```
-   python3 ant_farm_optimizer.py
-   python3 cart_simulation.py
-   python3 dual_path_simulation.py
+   python3 ant_farm.py
+   python3 cart_visualization.py
+   python3 ants_and_carts.py
    ```
 
 ## Quick Start
@@ -134,52 +118,41 @@ After installation, try these in order:
 
 1. Basic pathfinding with template layout:
    ```
-   python ant_farm_optimizer.py
+   python ant_farm.py
    ```
 
-2. Warehouse cart route visualization (2 panels - routes only):
+2. Warehouse cart route visualization:
    ```
-   python cart_routes_visualization.py
-   ```
-
-3. Warehouse cart traffic analysis (2 panels - heatmap only):
-   ```
-   python cart_heatmap_visualization.py
+   python cart_visualization.py
    ```
 
-4. Complete cart simulation (4 panels - routes + heatmap):
+3. Compare people vs cart paths (template):
    ```
-   python cart_simulation.py
-   ```
-
-5. Compare people vs cart paths:
-   ```
-   python dual_path_template.py
+   python ants_and_carts_templates.py
    ```
 
-6. Full dual pathfinding simulation:
+4. Full dual pathfinding simulation:
    ```
-   python dual_path_simulation.py
+   python ants_and_carts.py
    ```
 
-7. Build your own layout:
+5. Build your own layout:
    ```
-   python custom_layout_example.py
+   python custom_layout.py
    ```
 
 ## What the Program Shows
 
 The program displays animated visualizations showing:
 - Left panel: Ants searching for paths in real time
-- Right panel: Heat map showing the best paths found
-- For cart simulations: Additional panels showing traffic patterns and bottlenecks
+- Right panel: Best routes found
 - For dual pathfinding: Side-by-side comparison of people paths (blue) and cart paths (orange)
 
 ## Creating Your Layout
 
 ### Method 1: Edit the template in code
 
-Open ant_farm_optimizer.py and modify the create_template_layout function:
+Open ant_farm.py and modify the create_template_layout function:
 
 ```python
 def create_template_layout():
@@ -207,11 +180,11 @@ Edit floor_layout_template.csv in Excel:
 - 4 = second endpoint
 - 5-9 = additional endpoints
 
-Run: python custom_layout_example.py and select option 3
+Run: python custom_layout.py and select option 3
 
 ### Method 3: Interactive builder
 
-Run python custom_layout_example.py and select option 4
+Run python custom_layout.py and select option 4
 - Click to place obstacles
 - Press 't' for start point
 - Press 'e' for first endpoint
@@ -266,17 +239,16 @@ ITERATIONS = 10  # Change this value
 ```
 
 ### Speed Comparison
-- **ant_farm_optimizer.py**: Default 10 iterations, 50 ants = FAST
-- **cart_routes_visualization.py**: Default 10 iterations, 20 ants = FAST
-- **cart_simulation.py**: Default 10 iterations, 50 ants = FAST
-- **dual_path_simulation.py**: Default 150 iterations, 50 ants = SLOW
-- **dual_path_template.py**: Default 150 iterations, 50 ants = SLOW
+- **ant_farm.py**: Default 10 iterations, 50 ants = FAST
+- **cart_visualization.py**: Default 10 iterations, 20 ants = FAST
+- **ants_and_carts.py**: Default 150 iterations, 50 ants = SLOW
+- **ants_and_carts_templates.py**: Default 150 iterations, 50 ants = SLOW
 
 **Tip**: Start with fast settings (10 iterations, 20 ants) to test your layout. Once you're happy with it, increase to 100 iterations and 50 ants for final optimization.
 
 ## Parameter Adjustment
 
-Open ant_farm_optimizer.py and modify these values in the AntFarm class:
+Open ant_farm.py and modify these values in the AntFarm class:
 
 ```python
 self.num_ants = 50              # more ants search more options (higher accuracy)
@@ -294,13 +266,13 @@ Actual floor: 100 feet x 150 feet  ->  Grid: 50 x 75
 Machine at (20 feet, 30 feet), size 10 feet x 15 feet  ->  Grid: (10, 15) to (15, 23)
 ```
 
-For cart_simulation.py, the scale parameter controls this:
+For cart_visualization.py, the scale parameter controls this:
 - scale=2 means 1 grid unit = 6 inches (0.5 feet)
 - scale=1 means 1 grid unit = 12 inches (1 foot)
 
 ## Understanding Dual Pathfinding
 
-The dual pathfinding files (dual_path_simulation.py and dual_path_template.py) show the difference between optimal paths for:
+The dual pathfinding files (ants_and_carts.py and ants_and_carts_templates.py) show the difference between optimal paths for:
 - People: small, can navigate narrow spaces, shown in blue
 - Carts: 3ft x 5ft, need wider clearances, shown in orange
 

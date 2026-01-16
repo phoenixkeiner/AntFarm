@@ -1,6 +1,4 @@
-"""
-custom layout examples for ant colony optimization
-"""
+# custom layout examples for ant colony optimization
 
 import numpy as np
 import matplotlib.pyplot as plt
