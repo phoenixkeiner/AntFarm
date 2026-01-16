@@ -21,7 +21,7 @@ This program finds the best routes through the production floor using ant colony
 - Method 4: Interactive layout builder (click to place obstacles and endpoints)
 - Run this file and choose which method to use
 
-**cart_simulation.py** - Warehouse simulation for 3ft x 5ft carts
+**cart_simulation.py** - Complete warehouse simulation for 3ft x 5ft carts
 - Designed for real warehouse cart pathfinding
 - Includes cart collision detection based on physical cart dimensions
 - Shows 4 panels: current routes, best path with cart visualization, traffic heatmap with bottleneck detection and statistics
@@ -29,6 +29,20 @@ This program finds the best routes through the production floor using ant colony
 - Detects route conflicts where multiple carts would collide
 - Provides traffic congestion analysis
 - Run this to simulate warehouse cart movements
+
+**cart_routes_visualization.py** - Route finding visualization for carts
+- Shows 2 panels: current routes being tested and best route found
+- Displays cart footprint at key positions along the route
+- Color-coded route segments for sequential pathfinding
+- Focused on route optimization without traffic analysis
+- Run this for quick route visualization
+
+**cart_heatmap_visualization.py** - Traffic analysis and bottleneck detection
+- Shows 2 panels: traffic heatmap and detailed statistics
+- Identifies congestion points with traffic counts
+- Detects potential collision zones between carts
+- Provides recommendations for aisle widening and traffic control
+- Run this for traffic pattern analysis
 
 **dual_path_simulation.py** - Simultaneous pathfinding for people and carts
 - Runs two separate pathfinding algorithms at the same time
@@ -123,22 +137,32 @@ After installation, try these in order:
    python ant_farm_optimizer.py
    ```
 
-2. Warehouse cart simulation:
+2. Warehouse cart route visualization (2 panels - routes only):
+   ```
+   python cart_routes_visualization.py
+   ```
+
+3. Warehouse cart traffic analysis (2 panels - heatmap only):
+   ```
+   python cart_heatmap_visualization.py
+   ```
+
+4. Complete cart simulation (4 panels - routes + heatmap):
    ```
    python cart_simulation.py
    ```
 
-3. Compare people vs cart paths:
+5. Compare people vs cart paths:
    ```
    python dual_path_template.py
    ```
 
-4. Full dual pathfinding simulation:
+6. Full dual pathfinding simulation:
    ```
    python dual_path_simulation.py
    ```
 
-5. Build your own layout:
+7. Build your own layout:
    ```
    python custom_layout_example.py
    ```

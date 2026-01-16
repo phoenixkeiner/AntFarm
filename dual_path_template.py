@@ -494,11 +494,11 @@ if __name__ == "__main__":
 
     if farm.best_route_people:
         print(f"\nPeople best path: {farm.best_route_length_people:.0f} steps")
-        print(f"  Routes tested: {len(farm.all_routes_people)}")
+        print(f"Routes tested: {len(farm.all_routes_people)}")
 
     if farm.best_route_carts:
         print(f"\nCart best path: {farm.best_route_length_carts:.0f} steps")
-        print(f"  Routes tested: {len(farm.all_routes_carts)}")
+        print(f"Routes tested: {len(farm.all_routes_carts)}")
 
     if farm.best_route_people and farm.best_route_carts:
         diff = farm.best_route_length_carts - farm.best_route_length_people

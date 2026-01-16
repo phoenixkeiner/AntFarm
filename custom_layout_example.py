@@ -209,4 +209,4 @@ if __name__ == "__main__":
             print(f"endpoint {idx+1} at {e}: {plen:.0f} steps")
             if f.best_paths[e]:
                 path = f.best_paths[e]
-                print(f"  waypoints (every 5th): {[path[i] for i in range(0, len(path), 5)]}")
+                print(f"waypoints (every 5th): {[path[i] for i in range(0, len(path), 5)]}")

@@ -316,9 +316,9 @@ def create_warehouse_dual(scale=2):
     cart_w = 5 * scale
 
     print(f"\nDual Pathfinding Warehouse:")
-    print(f"  Grid: {h} x {w}")
-    print(f"  Cart size: {cart_h} x {cart_w} units (3ft x 5ft)")
-    print(f"  People: no size constraints")
+    print(f"Grid: {h} x {w}")
+    print(f"Cart size: {cart_h} x {cart_w} units (3ft x 5ft)")
+    print(f"People: no size constraints")
 
     farm = DualPathFarm(grid_size=(h, w), cart_size=(cart_h, cart_w))
     farm.num_ants = 50
@@ -468,22 +468,22 @@ def print_dual_analysis(farm):
 
     print(f"\nPeople (no size constraints):")
     if farm.best_route_people:
-        print(f"  Best route: {farm.best_route_length_people:.0f} steps")
-        print(f"  Distance: ~{farm.best_route_length_people * 0.5:.1f} ft")
-        print(f"  Total routes tested: {len(farm.all_routes_people)}")
+        print(f"Best route: {farm.best_route_length_people:.0f} steps")
+        print(f"Distance: ~{farm.best_route_length_people * 0.5:.1f} ft")
+        print(f"Total routes tested: {len(farm.all_routes_people)}")
 
     print(f"\nCarts (3ft x 5ft, {farm.cart_size[0]}x{farm.cart_size[1]} units):")
     if farm.best_route_carts:
-        print(f"  Best route: {farm.best_route_length_carts:.0f} steps")
-        print(f"  Distance: ~{farm.best_route_length_carts * 0.5:.1f} ft")
-        print(f"  Total routes tested: {len(farm.all_routes_carts)}")
+        print(f"Best route: {farm.best_route_length_carts:.0f} steps")
+        print(f"Distance: ~{farm.best_route_length_carts * 0.5:.1f} ft")
+        print(f"Total routes tested: {len(farm.all_routes_carts)}")
 
     if farm.best_route_people and farm.best_route_carts:
         diff = farm.best_route_length_carts - farm.best_route_length_people
         pct = (diff / farm.best_route_length_people) * 100
         print(f"\nDifference:")
-        print(f"  Carts require {diff:.0f} extra steps ({pct:.1f}% longer)")
-        print(f"  Extra distance: ~{diff * 0.5:.1f} ft")
+        print(f"Carts require {diff:.0f} extra steps ({pct:.1f}% longer)")
+        print(f"Extra distance: ~{diff * 0.5:.1f} ft")
 
 
 if __name__ == "__main__":

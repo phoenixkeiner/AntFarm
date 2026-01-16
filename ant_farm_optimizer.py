@@ -558,7 +558,7 @@ def visualize_ant_farm(farm, iterations=150):
 
 if __name__ == "__main__":
     # Set number of iterations here
-    ITERATIONS = 150
+    ITERATIONS = 10
 
     print("Ant Farm!!")
     print("\nRunning template layout. Change create_template_layout() to use your own.")
@@ -578,4 +578,4 @@ if __name__ == "__main__":
             plen = farm.best_path_lengths[e]
             print(f"Endpoint {idx+1} at {e}: {plen:.0f} steps")
             if farm.best_paths[e]:
-                print(f"  Waypoints: {len(farm.best_paths[e])}")
+                print(f"Waypoints: {len(farm.best_paths[e])}")

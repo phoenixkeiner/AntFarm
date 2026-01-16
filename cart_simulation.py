@@ -13,9 +13,9 @@ def create_warehouse_with_carts(scale=2):
     cart_w = 5 * scale
 
     print(f"\nWarehouse Layout:")
-    print(f"  Grid size: {h} x {w} (each unit = {12/scale} inches)")
-    print(f"  Cart size: {cart_h} x {cart_w} units (3ft x 5ft)")
-    print(f"  Actual warehouse: {h/(2*scale)}ft x {w/(2*scale)}ft")
+    print(f"Grid size: {h} x {w} (each unit = {12/scale} inches)")
+    print(f"Cart size: {cart_h} x {cart_w} units (3ft x 5ft)")
+    print(f"Actual warehouse: {h/(2*scale)}ft x {w/(2*scale)}ft")
 
     farm = AntFarm(grid_size=(h, w), cart_size=(cart_h, cart_w))
     farm.num_ants = 50 # higher the number the more accurate the tests will be.
@@ -140,7 +140,7 @@ def visualize_cart_paths(farm, iterations=150):
             if bottlenecks:
                 stats_text += f"Bottlenecks: {len(bottlenecks)}\n"
                 for bn in bottlenecks[:3]:
-                    stats_text += f"  {bn['traffic_count']} passes, {bn['clearance']} clear\n"
+                    stats_text += f"{bn['traffic_count']} passes, {bn['clearance']} clear\n"
                 stats_text += "\n"
 
             conflicts = farm.analyze_route_conflicts(time_window=20)
@@ -181,7 +181,7 @@ def print_detailed_analysis(farm):
     print(f"\nBottlenecks: {len(bottlenecks)}")
     if bottlenecks:
         for bn in sorted(bottlenecks, key=lambda x: x['traffic_count'], reverse=True)[:5]:
-            print(f"  {bn['position']}: {bn['traffic_count']} passes, {bn['clearance']} clear")
+            print(f"{bn['position']}: {bn['traffic_count']} passes, {bn['clearance']} clear")
 
     conflicts = farm.analyze_route_conflicts(time_window=30)
     print(f"\nConflicts: {len(conflicts)}")
@@ -192,7 +192,7 @@ def print_detailed_analysis(farm):
             conflict_positions[pos] = conflict_positions.get(pos, 0) + 1
         sorted_conflicts = sorted(conflict_positions.items(), key=lambda x: x[1], reverse=True)
         for pos, count in sorted_conflicts[:5]:
-            print(f"  {pos}: {count}")
+            print(f"{pos}: {count}")
 
     non_zero_traffic = farm.traffic_heatmap[farm.traffic_heatmap > 0]
     if len(non_zero_traffic) > 0:
@@ -210,7 +210,7 @@ def print_detailed_analysis(farm):
 
 if __name__ == "__main__":
     # Set number of iterations here
-    ITERATIONS = 150
+    ITERATIONS = 10
 
     print("Warehouse Cart Pathfinding Simulation")
     print("3ft x 5ft Carts\n")
