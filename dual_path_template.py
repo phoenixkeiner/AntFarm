@@ -355,7 +355,7 @@ def create_template_dual():
     return farm
 
 
-def visualize_dual_paths(farm, iterations=100):
+def visualize_dual_paths(farm, iterations=150):
     # Visualize both people and cart paths side by side
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
     iter_count = [0]
@@ -478,6 +478,9 @@ def visualize_dual_paths(farm, iterations=100):
 
 
 if __name__ == "__main__":
+    # Set number of iterations here
+    ITERATIONS = 150
+
     print("Dual Pathfinding: People vs Carts (Template)")
     print("\nComparing optimal paths for:")
     print("  - People (small ants, no size constraints)")
@@ -485,7 +488,7 @@ if __name__ == "__main__":
     print("\nBlue = People paths | Orange = Cart paths\n")
 
     farm = create_template_dual()
-    farm = visualize_dual_paths(farm, iterations=150)
+    farm = visualize_dual_paths(farm, iterations=ITERATIONS)
 
     print("\nResults")
 

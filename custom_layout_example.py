@@ -165,6 +165,9 @@ def create_interactive_layout():
 
 
 if __name__ == "__main__":
+    # Set number of iterations here
+    ITERATIONS = 200
+
     print("custom layout examples")
     print("\nchoose a method:")
     print("1. array layout")
@@ -172,9 +175,9 @@ if __name__ == "__main__":
     print("3. csv file")
     print("4. interactive builder")
     print()
-    
+
     choice = input("enter choice (1-4) or press enter for default [2]: ").strip()
-    
+
     if choice == '1':
         f = create_custom_array_layout()
     elif choice == '3':
@@ -183,7 +186,7 @@ if __name__ == "__main__":
         f = create_interactive_layout()
     else:
         f = create_my_production_floor()
-    
+
     print("\nrunning optimization")
     if f.sequential:
         print("sequential mode: visiting endpoints in order")
@@ -191,8 +194,8 @@ if __name__ == "__main__":
             print("will return to start after visiting all endpoints")
     else:
         print("parallel mode: finding independent paths to each endpoint")
-    
-    f = visualize_ant_farm(f, iterations=200)
+
+    f = visualize_ant_farm(f, iterations=ITERATIONS)
     
     print("done!")
     

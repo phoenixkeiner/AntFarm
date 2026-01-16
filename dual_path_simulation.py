@@ -343,7 +343,7 @@ def create_warehouse_dual(scale=2):
     return farm
 
 
-def visualize_dual_paths(farm, iterations=100):
+def visualize_dual_paths(farm, iterations=150):
     # Visualize both people and cart paths
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(18, 14))
     iter_count = [0]
@@ -487,6 +487,9 @@ def print_dual_analysis(farm):
 
 
 if __name__ == "__main__":
+    # Set number of iterations here
+    ITERATIONS = 150
+
     print("Dual Pathfinding: People vs Carts")
 
     farm = create_warehouse_dual(scale=2)
@@ -494,7 +497,7 @@ if __name__ == "__main__":
     print("\nOptimizing paths for both people and carts...")
     print("Blue = People paths | Orange = Cart paths\n")
 
-    farm = visualize_dual_paths(farm, iterations=150)
+    farm = visualize_dual_paths(farm, iterations=ITERATIONS)
 
     print_dual_analysis(farm)
 

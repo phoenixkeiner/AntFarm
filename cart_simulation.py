@@ -40,7 +40,7 @@ def create_warehouse_with_carts(scale=2):
     return farm
 
 
-def visualize_cart_paths(farm, iterations=100): # change the numbe of interations for amount of tests
+def visualize_cart_paths(farm, iterations=150):
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(18, 14))
     iter_count = [0]
     colorbar_ref = [None]
@@ -209,6 +209,9 @@ def print_detailed_analysis(farm):
 
 
 if __name__ == "__main__":
+    # Set number of iterations here
+    ITERATIONS = 150
+
     print("Warehouse Cart Pathfinding Simulation")
     print("3ft x 5ft Carts\n")
 
@@ -216,7 +219,7 @@ if __name__ == "__main__":
 
     print("Finding optimal routes, detecting bottlenecks, analyzing conflicts\n")
 
-    farm = visualize_cart_paths(farm, iterations=150)
+    farm = visualize_cart_paths(farm, iterations=ITERATIONS)
 
     print_detailed_analysis(farm)
 

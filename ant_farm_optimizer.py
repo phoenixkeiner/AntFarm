@@ -432,19 +432,18 @@ def split_route_into_segments(route, waypoints):
     return segments
 
 # visualizes ant colony optimization with animated pathfinding
-def visualize_ant_farm(farm, iterations=100): # change interations to add or shorten tests
+def visualize_ant_farm(farm, iterations=150):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
 
     iter_count = [0]
     colors = ['red', 'blue', 'green', 'orange', 'purple', 'cyan', 'magenta', 'yellow']
     
     def update(frame):
-        if iter_count[0] >= iterations:
-            anim.event_source.stop()
+        if frame >= iterations:
             return
 
         result = farm.run_iteration()
-        iter_count[0] += 1
+        iter_count[0] = frame + 1
         
         ax1.clear()
         ax2.clear()
@@ -558,13 +557,16 @@ def visualize_ant_farm(farm, iterations=100): # change interations to add or sho
 
 
 if __name__ == "__main__":
+    # Set number of iterations here
+    ITERATIONS = 150
+
     print("Ant Farm!!")
     print("\nRunning template layout. Change create_template_layout() to use your own.")
     print("Set sequential=True to visit endpoints in order.")
     print("Set return_to_start=True to return to starting point.\n")
-    
+
     farm = create_template_layout()
-    farm = visualize_ant_farm(farm, iterations=150)
+    farm = visualize_ant_farm(farm, iterations=ITERATIONS)
     
     print("\nResults")
     if farm.sequential:
