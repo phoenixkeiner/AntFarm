@@ -46,6 +46,7 @@ class DualPathFarm:
         self.beta = 2.0
         self.sequential = True
         self.return_to_start = True
+        self.segment_by_segment = True  # optimize each leg independently
 
         # cart dimensions
         self.cart_size = cart_size if cart_size else (1, 1)
@@ -59,6 +60,12 @@ class DualPathFarm:
         self.best_route_length_carts = float('inf')
         self.all_routes_people = []
         self.all_routes_carts = []
+
+        # segment-by-segment tracking
+        self.best_segments_people = []
+        self.best_segments_carts = []
+        self.best_segment_lengths_people = []
+        self.best_segment_lengths_carts = []
 
     def set_start_end(self, start, end, sequential=False, return_to_start=False):
         self.start = start
@@ -121,6 +128,33 @@ class DualPathFarm:
             return [1/len(nbrs)] * len(nbrs) if nbrs else []
         return [p/total for p in probs]
 
+    def run_ant(self, start_pos, target, check_cart=True, pheromone_map=None):
+        # single segment pathfinding from start to target
+        path = [start_pos]
+        visited = set([start_pos])
+        curr = start_pos
+        max_steps = self.grid_size[0] * self.grid_size[1]
+
+        for _ in range(max_steps):
+            if curr == target:
+                return path
+
+            nbrs = self.get_neighbors(curr, check_cart=check_cart)
+            if not nbrs:
+                return None
+
+            probs = self.calculate_probability(curr, nbrs, visited, target, pheromone_map)
+
+            if sum(probs) == 0:
+                return None
+
+            next_pos = random.choices(nbrs, weights=probs)[0]
+            path.append(next_pos)
+            visited.add(next_pos)
+            curr = next_pos
+
+        return None
+
     def run_ant_sequential(self, start_pos, targets, check_cart=True, pheromone_map=None):
         full_route = []
         curr_start = start_pos
@@ -159,6 +193,9 @@ class DualPathFarm:
 
     def run_iteration_dual(self):
         # Run pathfinding for both people and carts
+        if self.segment_by_segment:
+            return self.run_iteration_segment_by_segment()
+
         targets = self.ends.copy()
         if self.return_to_start:
             targets.append(self.start)
@@ -206,6 +243,99 @@ class DualPathFarm:
                     self.best_route_carts = route
 
         return {'people': routes_people, 'carts': routes_carts}
+
+    def run_iteration_segment_by_segment(self):
+        # optimize each leg independently
+        targets = self.ends.copy()
+        if self.return_to_start:
+            targets.append(self.start)
+
+        # initialize segment storage if needed
+        if not self.best_segments_people:
+            self.best_segments_people = [None] * len(targets)
+            self.best_segment_lengths_people = [float('inf')] * len(targets)
+        if not self.best_segments_carts:
+            self.best_segments_carts = [None] * len(targets)
+            self.best_segment_lengths_carts = [float('inf')] * len(targets)
+
+        # optimize each segment for people
+        curr_start = self.start
+        for seg_idx, target in enumerate(targets):
+            routes = []
+            for _ in range(self.num_ants):
+                route = self.run_ant(curr_start, target,
+                                   check_cart=False,
+                                   pheromone_map=self.pheromone_people)
+                routes.append(route)
+
+            # update pheromones
+            self.pheromone_people *= (1 - self.evaporation_rate)
+            self.pheromone_people = np.maximum(self.pheromone_people, 0.1)
+
+            for route in routes:
+                if route:
+                    self.all_routes_people.append(route)
+                    deposit = self.pheromone_deposit / len(route)
+                    for pos in route:
+                        self.pheromone_people[pos] += deposit
+                    if len(route) < self.best_segment_lengths_people[seg_idx]:
+                        self.best_segment_lengths_people[seg_idx] = len(route)
+                        self.best_segments_people[seg_idx] = route
+
+            # update start for next segment
+            if self.best_segments_people[seg_idx]:
+                curr_start = self.best_segments_people[seg_idx][-1]
+
+        # optimize each segment for carts
+        curr_start = self.start
+        for seg_idx, target in enumerate(targets):
+            routes = []
+            for _ in range(self.num_ants):
+                route = self.run_ant(curr_start, target,
+                                   check_cart=True,
+                                   pheromone_map=self.pheromone_carts)
+                routes.append(route)
+
+            # update pheromones
+            self.pheromone_carts *= (1 - self.evaporation_rate)
+            self.pheromone_carts = np.maximum(self.pheromone_carts, 0.1)
+
+            for route in routes:
+                if route:
+                    self.all_routes_carts.append(route)
+                    deposit = self.pheromone_deposit / len(route)
+                    for pos in route:
+                        self.pheromone_carts[pos] += deposit
+                    if len(route) < self.best_segment_lengths_carts[seg_idx]:
+                        self.best_segment_lengths_carts[seg_idx] = len(route)
+                        self.best_segments_carts[seg_idx] = route
+
+            # update start for next segment
+            if self.best_segments_carts[seg_idx]:
+                curr_start = self.best_segments_carts[seg_idx][-1]
+
+        # combine segments for display
+        if all(seg is not None for seg in self.best_segments_people):
+            combined_people = []
+            for seg in self.best_segments_people:
+                if combined_people:
+                    combined_people.extend(seg[1:])
+                else:
+                    combined_people.extend(seg)
+            self.best_route_people = combined_people
+            self.best_route_length_people = len(combined_people)
+
+        if all(seg is not None for seg in self.best_segments_carts):
+            combined_carts = []
+            for seg in self.best_segments_carts:
+                if combined_carts:
+                    combined_carts.extend(seg[1:])
+                else:
+                    combined_carts.extend(seg)
+            self.best_route_carts = combined_carts
+            self.best_route_length_carts = len(combined_carts)
+
+        return {'people': [], 'carts': []}
 
 
 def create_template_dual():

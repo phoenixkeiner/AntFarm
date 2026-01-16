@@ -19,6 +19,7 @@ def create_warehouse_with_carts(scale=2):
 
     farm = AntFarm(grid_size=(h, w), cart_size=(cart_h, cart_w))
     farm.num_ants = 50 # higher the number the more accurate the tests will be.
+    farm.segment_by_segment = True # optimize each leg independently
 
     start_pos = (10, 10)
     endpoints = [(100, 160), (50, 160), (100, 80)]

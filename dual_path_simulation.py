@@ -46,6 +46,7 @@ class DualPathFarm:
         self.beta = 2.0
         self.sequential = True
         self.return_to_start = True
+        self.segment_by_segment = True # optimize each leg independently
 
         # cart dimensions
         self.cart_size = cart_size if cart_size else (1, 1)
@@ -59,6 +60,10 @@ class DualPathFarm:
         self.best_route_length_carts = float('inf')
         self.all_routes_people = []
         self.all_routes_carts = []
+        self.best_segments_people = []
+        self.best_segments_carts = []
+        self.best_segment_lengths_people = []
+        self.best_segment_lengths_carts = []
 
     def set_start_end(self, start, end, sequential=False, return_to_start=False):
         self.start = start
@@ -121,6 +126,34 @@ class DualPathFarm:
             return [1/len(nbrs)] * len(nbrs) if nbrs else []
         return [p/total for p in probs]
 
+    def run_ant(self, target, start_override=None, check_cart=True, pheromone_map=None):
+        start_pos = start_override if start_override is not None else self.start
+
+        path = [start_pos]
+        visited = set([start_pos])
+        curr = start_pos
+        max_steps = self.grid_size[0] * self.grid_size[1]
+
+        for _ in range(max_steps):
+            if curr == target:
+                return path
+
+            nbrs = self.get_neighbors(curr, check_cart=check_cart)
+            if not nbrs:
+                break
+
+            probs = self.calculate_probability(curr, nbrs, visited, target, pheromone_map)
+
+            if sum(probs) == 0:
+                break
+
+            next_pos = random.choices(nbrs, weights=probs)[0]
+            path.append(next_pos)
+            visited.add(next_pos)
+            curr = next_pos
+
+        return None
+
     def run_ant_sequential(self, start_pos, targets, check_cart=True, pheromone_map=None):
         full_route = []
         curr_start = start_pos
@@ -163,49 +196,116 @@ class DualPathFarm:
         if self.return_to_start:
             targets.append(self.start)
 
-        # pathfinding for people (no cart constraints)
-        routes_people = []
-        for _ in range(self.num_ants):
-            route = self.run_ant_sequential(self.start, targets,
-                                          check_cart=False,
-                                          pheromone_map=self.pheromone_people)
-            routes_people.append(route)
+        if self.segment_by_segment:
+            # segment by segment optimization
+            if not self.best_segments_people:
+                self.best_segments_people = [None] * len(targets)
+                self.best_segment_lengths_people = [float('inf')] * len(targets)
+                self.best_segments_carts = [None] * len(targets)
+                self.best_segment_lengths_carts = [float('inf')] * len(targets)
 
-        # pathfinding for carts (with cart constraints)
-        routes_carts = []
-        for _ in range(self.num_ants):
-            route = self.run_ant_sequential(self.start, targets,
-                                          check_cart=True,
-                                          pheromone_map=self.pheromone_carts)
-            routes_carts.append(route)
+            # optimize each segment for people
+            for seg_idx, target in enumerate(targets):
+                start_pos = self.start if seg_idx == 0 else self.ends[seg_idx - 1]
+                segment_paths = []
+                for _ in range(self.num_ants):
+                    path = self.run_ant(target, start_override=start_pos, check_cart=False,
+                                      pheromone_map=self.pheromone_people)
+                    segment_paths.append(path)
 
-        # update pheromones for people
-        self.pheromone_people *= (1 - self.evaporation_rate)
-        self.pheromone_people = np.maximum(self.pheromone_people, 0.1)
-        for route in routes_people:
-            if route:
-                self.all_routes_people.append(route)
-                deposit = self.pheromone_deposit / len(route)
-                for pos in route:
-                    self.pheromone_people[pos] += deposit
-                if len(route) < self.best_route_length_people:
-                    self.best_route_length_people = len(route)
-                    self.best_route_people = route
+                self.pheromone_people *= (1 - self.evaporation_rate)
+                self.pheromone_people = np.maximum(self.pheromone_people, 0.1)
+                for path in segment_paths:
+                    if path:
+                        deposit = self.pheromone_deposit / len(path)
+                        for pos in path:
+                            self.pheromone_people[pos] += deposit
+                        if len(path) < self.best_segment_lengths_people[seg_idx]:
+                            self.best_segment_lengths_people[seg_idx] = len(path)
+                            self.best_segments_people[seg_idx] = path
 
-        # update pheromones for carts
-        self.pheromone_carts *= (1 - self.evaporation_rate)
-        self.pheromone_carts = np.maximum(self.pheromone_carts, 0.1)
-        for route in routes_carts:
-            if route:
-                self.all_routes_carts.append(route)
-                deposit = self.pheromone_deposit / len(route)
-                for pos in route:
-                    self.pheromone_carts[pos] += deposit
-                if len(route) < self.best_route_length_carts:
-                    self.best_route_length_carts = len(route)
-                    self.best_route_carts = route
+            # optimize each segment for carts
+            for seg_idx, target in enumerate(targets):
+                start_pos = self.start if seg_idx == 0 else self.ends[seg_idx - 1]
+                segment_paths = []
+                for _ in range(self.num_ants):
+                    path = self.run_ant(target, start_override=start_pos, check_cart=True,
+                                      pheromone_map=self.pheromone_carts)
+                    segment_paths.append(path)
 
-        return {'people': routes_people, 'carts': routes_carts}
+                self.pheromone_carts *= (1 - self.evaporation_rate)
+                self.pheromone_carts = np.maximum(self.pheromone_carts, 0.1)
+                for path in segment_paths:
+                    if path:
+                        deposit = self.pheromone_deposit / len(path)
+                        for pos in path:
+                            self.pheromone_carts[pos] += deposit
+                        if len(path) < self.best_segment_lengths_carts[seg_idx]:
+                            self.best_segment_lengths_carts[seg_idx] = len(path)
+                            self.best_segments_carts[seg_idx] = path
+
+            # combine best segments
+            if all(seg is not None for seg in self.best_segments_people):
+                full_route = []
+                for seg in self.best_segments_people:
+                    if len(full_route) > 0:
+                        seg = seg[1:]
+                    full_route.extend(seg)
+                self.best_route_people = full_route
+                self.best_route_length_people = len(full_route)
+
+            if all(seg is not None for seg in self.best_segments_carts):
+                full_route = []
+                for seg in self.best_segments_carts:
+                    if len(full_route) > 0:
+                        seg = seg[1:]
+                    full_route.extend(seg)
+                self.best_route_carts = full_route
+                self.best_route_length_carts = len(full_route)
+
+            return {'people': self.best_segments_people, 'carts': self.best_segments_carts}
+
+        else:
+            # traditional sequential optimization
+            routes_people = []
+            for _ in range(self.num_ants):
+                route = self.run_ant_sequential(self.start, targets,
+                                              check_cart=False,
+                                              pheromone_map=self.pheromone_people)
+                routes_people.append(route)
+
+            routes_carts = []
+            for _ in range(self.num_ants):
+                route = self.run_ant_sequential(self.start, targets,
+                                              check_cart=True,
+                                              pheromone_map=self.pheromone_carts)
+                routes_carts.append(route)
+
+            self.pheromone_people *= (1 - self.evaporation_rate)
+            self.pheromone_people = np.maximum(self.pheromone_people, 0.1)
+            for route in routes_people:
+                if route:
+                    self.all_routes_people.append(route)
+                    deposit = self.pheromone_deposit / len(route)
+                    for pos in route:
+                        self.pheromone_people[pos] += deposit
+                    if len(route) < self.best_route_length_people:
+                        self.best_route_length_people = len(route)
+                        self.best_route_people = route
+
+            self.pheromone_carts *= (1 - self.evaporation_rate)
+            self.pheromone_carts = np.maximum(self.pheromone_carts, 0.1)
+            for route in routes_carts:
+                if route:
+                    self.all_routes_carts.append(route)
+                    deposit = self.pheromone_deposit / len(route)
+                    for pos in route:
+                        self.pheromone_carts[pos] += deposit
+                    if len(route) < self.best_route_length_carts:
+                        self.best_route_length_carts = len(route)
+                        self.best_route_carts = route
+
+            return {'people': routes_people, 'carts': routes_carts}
 
 
 def create_warehouse_dual(scale=2):
