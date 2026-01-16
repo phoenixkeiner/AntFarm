@@ -3,7 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
-from ant_farm_optimizer import AntFarm, visualize_ant_farm, split_route_into_segments
+from ant_farm import AntFarm, visualize_ant_farm, split_route_into_segments
 
 
 def create_warehouse_with_carts(scale=2):
@@ -75,9 +75,6 @@ def visualize_cart_routes(farm, iterations=150):
 
         # Right panel: Best route found
         ax2.clear()
-        pher_disp = np.copy(farm.pheromone)
-        pher_disp[farm.obstacles] = 0
-        ax2.imshow(pher_disp, cmap='YlOrRd', alpha=0.7)
         ax2.imshow(farm.obstacles, cmap='Greys', alpha=0.3)
         ax2.set_title(f'Best Route Found: {farm.best_route_length:.0f} steps (~{farm.best_route_length * 0.5:.1f}ft)', fontsize=12)
 

@@ -474,11 +474,7 @@ def visualize_ant_farm(farm, iterations=150):
                 ax1.plot(e[1], e[0], 'ro', markersize=12, label=f'Stop {idx+1}')
             ax1.legend()
             ax1.grid(True, alpha=0.3)
-            
-            pher_disp = np.copy(farm.pheromone)
-            pher_disp[farm.obstacles] = 0
-            
-            ax2.imshow(pher_disp, cmap='YlOrRd', alpha=0.8)
+
             ax2.imshow(farm.obstacles, cmap='Greys', alpha=0.3)
             ax2.set_title(f'Best Route: {farm.best_route_length:.0f} steps', fontsize=14)
 
@@ -526,11 +522,7 @@ def visualize_ant_farm(farm, iterations=150):
                 ax1.plot(e[1], e[0], 'o', color=c, markersize=12, label=f'End {idx+1}')
             ax1.legend()
             ax1.grid(True, alpha=0.3)
-            
-            pher_disp = np.copy(farm.pheromone)
-            pher_disp[farm.obstacles] = 0
-            
-            ax2.imshow(pher_disp, cmap='YlOrRd', alpha=0.8)
+
             ax2.imshow(farm.obstacles, cmap='Greys', alpha=0.3)
             
             total_len = sum([farm.best_path_lengths[e] for e in farm.ends if farm.best_path_lengths[e] != float('inf')])

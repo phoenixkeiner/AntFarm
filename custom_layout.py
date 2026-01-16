@@ -4,7 +4,7 @@ custom layout examples for ant colony optimization
 
 import numpy as np
 import matplotlib.pyplot as plt
-from ant_farm_optimizer import AntFarm, visualize_ant_farm
+from ant_farm import AntFarm, visualize_ant_farm
 
 
 # creates layout from 2d array where 0 = free, 1 = obstacle, 2 = start, 3 = ends

@@ -418,11 +418,8 @@ def visualize_dual_paths(farm, iterations=150):
         ax2.legend(fontsize=10)
         ax2.grid(True, alpha=0.3)
 
-        # Panel 3: People pheromone
+        # Panel 3: People route
         ax3.clear()
-        pher_people = np.copy(farm.pheromone_people)
-        pher_people[farm.obstacles] = 0
-        ax3.imshow(pher_people, cmap='Blues', alpha=0.7)
         ax3.imshow(farm.obstacles, cmap='Greys', alpha=0.3)
         ax3.set_title('People Path', fontsize=12)
         if farm.best_route_people:
@@ -444,11 +441,8 @@ def visualize_dual_paths(farm, iterations=150):
         ax3.legend(fontsize=8)
         ax3.grid(True, alpha=0.3)
 
-        # Panel 4: Cart pheromone
+        # Panel 4: Cart route
         ax4.clear()
-        pher_carts = np.copy(farm.pheromone_carts)
-        pher_carts[farm.obstacles] = 0
-        ax4.imshow(pher_carts, cmap='YlOrRd', alpha=0.7)
         ax4.imshow(farm.obstacles, cmap='Greys', alpha=0.3)
         ax4.set_title('Cart Path', fontsize=12)
         if farm.best_route_carts:

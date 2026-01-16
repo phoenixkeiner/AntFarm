@@ -414,11 +414,8 @@ def visualize_dual_paths(farm, iterations=150):
 
         # Panel 3: Pheromone heatmap for people
         ax3.clear()
-        pher_people = np.copy(farm.pheromone_people)
-        pher_people[farm.obstacles] = 0
-        ax3.imshow(pher_people, cmap='Blues', alpha=0.7)
         ax3.imshow(farm.obstacles, cmap='Greys', alpha=0.3)
-        ax3.set_title(f'People Pheromone Map', fontsize=12)
+        ax3.set_title(f'People Route', fontsize=12)
         if farm.best_route_people:
             waypoints = farm.ends.copy()
             if farm.return_to_start:
@@ -438,13 +435,10 @@ def visualize_dual_paths(farm, iterations=150):
         ax3.legend(fontsize=8)
         ax3.grid(True, alpha=0.2)
 
-        # Panel 4: Pheromone heatmap for carts
+        # Panel 4: Cart route
         ax4.clear()
-        pher_carts = np.copy(farm.pheromone_carts)
-        pher_carts[farm.obstacles] = 0
-        ax4.imshow(pher_carts, cmap='YlOrRd', alpha=0.7)
         ax4.imshow(farm.obstacles, cmap='Greys', alpha=0.3)
-        ax4.set_title(f'Cart Pheromone Map', fontsize=12)
+        ax4.set_title(f'Cart Route', fontsize=12)
         if farm.best_route_carts:
             waypoints = farm.ends.copy()
             if farm.return_to_start:
