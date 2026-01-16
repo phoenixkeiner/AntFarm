@@ -5,7 +5,7 @@ from matplotlib.patches import Rectangle
 import random
 
 class AntFarm:
-    def __init__(self, grid_size=(50, 50)):
+    def __init__(self, grid_size=(50, 50), cart_size=None):
         self.grid_size = grid_size
         self.pheromone = np.ones(grid_size) * 0.1
         self.obstacles = np.zeros(grid_size, dtype=bool)
@@ -14,15 +14,31 @@ class AntFarm:
         self.ants = []
         self.best_paths = {}
         self.best_path_lengths = {}
-        self.num_ants = 20
+        self.num_ants = 50 # this number sets the accuracy of the test
         self.evaporation_rate = 0.1
         self.pheromone_deposit = 100
         self.alpha = 1.0
         self.beta = 2.0
-        self.sequential = False
-        self.return_to_start = False
+        self.sequential = True # set to True to have the ants visits enpoints in order.
+        self.return_to_start = True #set to True to return to start point.
         self.best_route = None
         self.best_route_length = float('inf')
+
+        # cart dimensions (height, width) for collision detection
+        self.cart_size = cart_size if cart_size else (1, 1)
+        self.traffic_heatmap = np.zeros(grid_size, dtype=int)
+        self.bottlenecks = []
+        self.all_routes = []
+
+        # separate pheromones and best paths for people vs thicc bois
+        self.pheromone_people = np.ones(grid_size) * 0.1
+        self.pheromone_carts = np.ones(grid_size) * 0.1
+        self.best_route_people = None
+        self.best_route_carts = None
+        self.best_route_length_people = float('inf')
+        self.best_route_length_carts = float('inf')
+        self.all_routes_people = []
+        self.all_routes_carts = []
     
     # sets single start point and one or more end points
     def set_start_end(self, start, end, sequential=False, return_to_start=False):
@@ -66,35 +82,55 @@ class AntFarm:
                 self.best_paths[e] = None
                 self.best_path_lengths[e] = float('inf')
     
+    # checks if cart at position would collide with obstacles
+    def check_cart_collision(self, pos):
+        y, x = pos
+        cart_h, cart_w = self.cart_size
+
+        # check if cart footprint extends beyond grid
+        if (y + cart_h > self.grid_size[0] or
+            x + cart_w > self.grid_size[1]):
+            return True
+
+        # check if any part of cart overlaps with obstacle
+        cart_footprint = self.obstacles[y:y+cart_h, x:x+cart_w]
+        return np.any(cart_footprint)
+
     # returns valid neighboring positions including diagonals
-    def get_neighbors(self, pos):
+    def get_neighbors(self, pos, check_cart=True):
         y, x = pos
         nbrs = []
-        dirs = [(-1, 0), (1, 0), (0, -1), (0, 1), 
+        dirs = [(-1, 0), (1, 0), (0, -1), (0, 1),
                 (-1, -1), (-1, 1), (1, -1), (1, 1)]
-        
+
         for dy, dx in dirs:
             ny, nx = y + dy, x + dx
-            if (0 <= ny < self.grid_size[0] and 
-                0 <= nx < self.grid_size[1] and 
+            if (0 <= ny < self.grid_size[0] and
+                0 <= nx < self.grid_size[1] and
                 not self.obstacles[ny, nx]):
-                nbrs.append((ny, nx))
+                if check_cart:
+                    if not self.check_cart_collision((ny, nx)):
+                        nbrs.append((ny, nx))
+                else:
+                    nbrs.append((ny, nx))
         return nbrs
-    
+
     # calculates movement probability to each neighbor based on pheromone and distance heuristic
-    def calculate_probability(self, current, nbrs, visited, target):
+    def calculate_probability(self, current, nbrs, visited, target, pheromone_map=None):
         probs = []
-        
+        if pheromone_map is None:
+            pheromone_map = self.pheromone
+
         for nbr in nbrs:
             if nbr in visited:
                 probs.append(0)
                 continue
-            
-            pher = self.pheromone[nbr] ** self.alpha
+
+            pher = pheromone_map[nbr] ** self.alpha
             dist = np.sqrt((nbr[0] - target[0])**2 + (nbr[1] - target[1])**2)
             heur = (1.0 / (dist + 1)) ** self.beta
             probs.append(pher * heur)
-        
+
         total = sum(probs)
         if total == 0:
             return [1/len(nbrs)] * len(nbrs) if nbrs else []
@@ -128,16 +164,16 @@ class AntFarm:
         return None
     
     # executes single ant through sequential route visiting all endpoints in order
-    def run_ant_sequential(self, start_pos, targets):
+    def run_ant_sequential(self, start_pos, targets, check_cart=True, pheromone_map=None):
         full_route = []
         curr_start = start_pos
-        
+
         for target in targets:
             path = [curr_start]
             visited = set([curr_start])
             curr = curr_start
             max_steps = self.grid_size[0] * self.grid_size[1]
-            
+
             for _ in range(max_steps):
                 if curr == target:
                     if len(full_route) > 0:
@@ -145,23 +181,23 @@ class AntFarm:
                     full_route.extend(path)
                     curr_start = target
                     break
-                
-                nbrs = self.get_neighbors(curr)
+
+                nbrs = self.get_neighbors(curr, check_cart=check_cart)
                 if not nbrs:
                     return None
-                
-                probs = self.calculate_probability(curr, nbrs, visited, target)
-                
+
+                probs = self.calculate_probability(curr, nbrs, visited, target, pheromone_map=pheromone_map)
+
                 if sum(probs) == 0:
                     return None
-                
+
                 next_pos = random.choices(nbrs, weights=probs)[0]
                 path.append(next_pos)
                 visited.add(next_pos)
                 curr = next_pos
             else:
                 return None
-        
+
         return full_route if full_route else None
     
     # applies pheromone evaporation and deposits new pheromones from successful paths
@@ -184,17 +220,85 @@ class AntFarm:
     def update_pheromones_sequential(self, routes):
         self.pheromone *= (1 - self.evaporation_rate)
         self.pheromone = np.maximum(self.pheromone, 0.1)
-        
+
         for route in routes:
             if route:
+                # routes for traffic analysis
+                self.all_routes.append(route)
+
                 deposit = self.pheromone_deposit / len(route)
                 for pos in route:
                     self.pheromone[pos] += deposit
-                
+                    # track traffic through each cell
+                    self.traffic_heatmap[pos] += 1
+
                 if len(route) < self.best_route_length:
                     self.best_route_length = len(route)
                     self.best_route = route
     
+    # detects bottlenecks where paths narrow and traffic concentrates
+    def detect_bottlenecks(self, threshold=None):
+        if threshold is None:
+            threshold = len(self.all_routes) * 0.3
+
+        self.bottlenecks = []
+
+        # find cells with high traffic
+        high_traffic = np.where(self.traffic_heatmap > threshold)
+
+        for i in range(len(high_traffic[0])):
+            y, x = high_traffic[0][i], high_traffic[1][i]
+
+            # count passable neighbors
+            cart_h, cart_w = self.cart_size
+            neighbors = 0
+            for dy in [-1, 0, 1]:
+                for dx in [-1, 0, 1]:
+                    ny, nx = y + dy, x + dx
+                    if (0 <= ny < self.grid_size[0] and
+                        0 <= nx < self.grid_size[1] and
+                        not self.obstacles[ny, nx] and
+                        not self.check_cart_collision((ny, nx))):
+                        neighbors += 1
+
+            # bottleneck if high traffic + few neighbors
+            if neighbors <= 4:
+                self.bottlenecks.append({
+                    'position': (y, x),
+                    'traffic_count': int(self.traffic_heatmap[y, x]),
+                    'clearance': neighbors
+                })
+
+        return self.bottlenecks
+
+    # analyzes route conflicts where multiple carts use same cells
+    def analyze_route_conflicts(self, time_window=10):
+        conflicts = []
+
+        # simulate carts moving along their routes simultaneously
+        for t in range(time_window):
+            occupied = {}
+
+            for route_idx, route in enumerate(self.all_routes[-20:]):
+                if t < len(route):
+                    pos = route[t]
+
+                    # check cart footprint at this position
+                    cart_h, cart_w = self.cart_size
+                    for dy in range(cart_h):
+                        for dx in range(cart_w):
+                            cell = (pos[0] + dy, pos[1] + dx)
+                            if cell in occupied:
+                                conflicts.append({
+                                    'time': t,
+                                    'position': cell,
+                                    'routes': [occupied[cell], route_idx]
+                                })
+                            else:
+                                occupied[cell] = route_idx
+
+        return conflicts
+
     # executes one complete iteration of ant colony optimization for all endpoints
     def run_iteration(self):
         if self.sequential:
@@ -202,21 +306,25 @@ class AntFarm:
             targets = self.ends.copy()
             if self.return_to_start:
                 targets.append(self.start)
-            
+
             for _ in range(self.num_ants):
                 route = self.run_ant_sequential(self.start, targets)
                 routes.append(route)
-            
+
             self.update_pheromones_sequential(routes)
             return routes
         else:
             paths_by_target = {e: [] for e in self.ends}
-            
+
             for target in self.ends:
                 for _ in range(self.num_ants):
                     path = self.run_ant(target)
                     paths_by_target[target].append(path)
-            
+                    if path:
+                        self.all_routes.append(path)
+                        for pos in path:
+                            self.traffic_heatmap[pos] += 1
+
             self.update_pheromones(paths_by_target)
             return paths_by_target
 
@@ -242,7 +350,7 @@ def create_template_layout():
 
 
 # visualizes ant colony optimization with animated pathfinding
-def visualize_ant_farm(farm, iterations=100):
+def visualize_ant_farm(farm, iterations=100): # change interations to add or shorten tests
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
     
     iter_count = [0]
@@ -250,8 +358,9 @@ def visualize_ant_farm(farm, iterations=100):
     
     def update(frame):
         if iter_count[0] >= iterations:
+            anim.event_source.stop()
             return
-        
+
         result = farm.run_iteration()
         iter_count[0] += 1
         
