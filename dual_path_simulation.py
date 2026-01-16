@@ -7,6 +7,30 @@ from matplotlib.patches import Rectangle
 import random
 
 
+# splits route into segments between waypoints
+def split_route_into_segments(route, waypoints):
+    if not route or not waypoints:
+        return []
+
+    segments = []
+    route_list = list(route)
+    current_segment = [route_list[0]]
+    waypoint_idx = 0
+
+    for i in range(1, len(route_list)):
+        current_segment.append(route_list[i])
+
+        if waypoint_idx < len(waypoints) and route_list[i] == waypoints[waypoint_idx]:
+            segments.append(current_segment)
+            current_segment = [route_list[i]]
+            waypoint_idx += 1
+
+    if len(current_segment) > 1:
+        segments.append(current_segment)
+
+    return segments
+
+
 class DualPathFarm:
     # Ant farm with separate pathfinding for people and carts
 
@@ -223,6 +247,7 @@ def visualize_dual_paths(farm, iterations=100):
     # Visualize both people and cart paths
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(18, 14))
     iter_count = [0]
+    colors = ['red', 'blue', 'green', 'orange', 'purple', 'cyan', 'magenta', 'yellow']
 
     def update(frame):
         if iter_count[0] >= iterations:
@@ -292,8 +317,17 @@ def visualize_dual_paths(farm, iterations=100):
         ax3.imshow(farm.obstacles, cmap='Greys', alpha=0.3)
         ax3.set_title(f'People Pheromone Map', fontsize=12)
         if farm.best_route_people:
-            ba = np.array(farm.best_route_people)
-            ax3.plot(ba[:, 1], ba[:, 0], 'cyan', linewidth=2, label='Best People Path')
+            waypoints = farm.ends.copy()
+            if farm.return_to_start:
+                waypoints.append(farm.start)
+            segments = split_route_into_segments(farm.best_route_people, waypoints)
+
+            for seg_idx, segment in enumerate(segments):
+                if len(segment) > 1:
+                    seg_array = np.array(segment)
+                    color = colors[seg_idx % len(colors)]
+                    ax3.plot(seg_array[:, 1], seg_array[:, 0], color=color,
+                            linewidth=2, label=f'Seg {seg_idx+1}')
         ax3.legend(fontsize=8)
         ax3.grid(True, alpha=0.2)
 
@@ -305,8 +339,17 @@ def visualize_dual_paths(farm, iterations=100):
         ax4.imshow(farm.obstacles, cmap='Greys', alpha=0.3)
         ax4.set_title(f'Cart Pheromone Map', fontsize=12)
         if farm.best_route_carts:
-            ba = np.array(farm.best_route_carts)
-            ax4.plot(ba[:, 1], ba[:, 0], 'lime', linewidth=2, label='Best Cart Path')
+            waypoints = farm.ends.copy()
+            if farm.return_to_start:
+                waypoints.append(farm.start)
+            segments = split_route_into_segments(farm.best_route_carts, waypoints)
+
+            for seg_idx, segment in enumerate(segments):
+                if len(segment) > 1:
+                    seg_array = np.array(segment)
+                    color = colors[seg_idx % len(colors)]
+                    ax4.plot(seg_array[:, 1], seg_array[:, 0], color=color,
+                            linewidth=2, label=f'Seg {seg_idx+1}')
         ax4.legend(fontsize=8)
         ax4.grid(True, alpha=0.2)
 
