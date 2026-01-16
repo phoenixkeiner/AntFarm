@@ -21,8 +21,11 @@ class AntFarm:
         self.beta = 2.0
         self.sequential = True # set to True to have the ants visits enpoints in order.
         self.return_to_start = True #set to True to return to start point.
+        self.segment_by_segment = False # set to True to optimize each leg independently
         self.best_route = None
         self.best_route_length = float('inf')
+        self.best_segments = [] # stores best path for each segment independently
+        self.best_segment_lengths = [] # stores length of each best segment
 
         # cart dimensions (height, width) for collision detection
         self.cart_size = cart_size if cart_size else (1, 1)
@@ -137,30 +140,34 @@ class AntFarm:
         return [p/total for p in probs]
     
     # executes single ant pathfinding to specified target endpoint
-    def run_ant(self, target):
-        path = [self.start]
-        visited = set([self.start])
-        curr = self.start
+    def run_ant(self, target, start_override=None, check_cart=True, pheromone_map=None):
+        start_pos = start_override if start_override is not None else self.start
+        if pheromone_map is None:
+            pheromone_map = self.pheromone
+
+        path = [start_pos]
+        visited = set([start_pos])
+        curr = start_pos
         max_steps = self.grid_size[0] * self.grid_size[1]
-        
+
         for _ in range(max_steps):
             if curr == target:
                 return path
-            
-            nbrs = self.get_neighbors(curr)
+
+            nbrs = self.get_neighbors(curr, check_cart=check_cart)
             if not nbrs:
                 break
-            
-            probs = self.calculate_probability(curr, nbrs, visited, target)
-            
+
+            probs = self.calculate_probability(curr, nbrs, visited, target, pheromone_map=pheromone_map)
+
             if sum(probs) == 0:
                 break
-            
+
             next_pos = random.choices(nbrs, weights=probs)[0]
             path.append(next_pos)
             visited.add(next_pos)
             curr = next_pos
-        
+
         return None
     
     # executes single ant through sequential route visiting all endpoints in order
@@ -299,9 +306,58 @@ class AntFarm:
 
         return conflicts
 
+    # optimizes each segment independently
+    def run_iteration_segment_by_segment(self):
+        targets = self.ends.copy()
+        if self.return_to_start:
+            targets.append(self.start)
+
+        # initialize segment storage if needed
+        if not self.best_segments:
+            self.best_segments = [None] * len(targets)
+            self.best_segment_lengths = [float('inf')] * len(targets)
+
+        # optimize each segment independently
+        for seg_idx, target in enumerate(targets):
+            start_pos = self.start if seg_idx == 0 else self.ends[seg_idx - 1]
+
+            # run ants for this segment only
+            segment_paths = []
+            for _ in range(self.num_ants):
+                path = self.run_ant(target, start_override=start_pos)
+                segment_paths.append(path)
+
+            # update pheromones for this segment
+            self.pheromone *= (1 - self.evaporation_rate)
+            self.pheromone = np.maximum(self.pheromone, 0.1)
+
+            for path in segment_paths:
+                if path:
+                    deposit = self.pheromone_deposit / len(path)
+                    for pos in path:
+                        self.pheromone[pos] += deposit
+
+                    if len(path) < self.best_segment_lengths[seg_idx]:
+                        self.best_segment_lengths[seg_idx] = len(path)
+                        self.best_segments[seg_idx] = path
+
+        # combine best segments into full route
+        if all(seg is not None for seg in self.best_segments):
+            full_route = []
+            for seg in self.best_segments:
+                if len(full_route) > 0:
+                    seg = seg[1:]  # skip first point to avoid duplication
+                full_route.extend(seg)
+            self.best_route = full_route
+            self.best_route_length = len(full_route)
+
+        return self.best_segments
+
     # executes one complete iteration of ant colony optimization for all endpoints
     def run_iteration(self):
-        if self.sequential:
+        if self.segment_by_segment and self.sequential:
+            return self.run_iteration_segment_by_segment()
+        elif self.sequential:
             routes = []
             targets = self.ends.copy()
             if self.return_to_start:
@@ -332,20 +388,23 @@ class AntFarm:
 # creates sample production floor layout with multiple endpoints
 def create_template_layout():
     farm = AntFarm(grid_size=(40, 60))
-    
+
     # parallel mode: find paths to all endpoints independently
     # farm.set_start_end(start=(5, 5), end=[(35, 55), (10, 55), (35, 25)])
-    
+
     # sequential mode: visit endpoints in order (1->2->3), optionally return to start
-    farm.set_start_end(start=(5, 5), end=[(35, 55), (10, 55), (35, 25)], 
+    farm.set_start_end(start=(5, 5), end=[(35, 55), (10, 55), (35, 25)],
                        sequential=True, return_to_start=False)
-    
+
+    # segment by segment mode: optimize each leg independently
+    farm.segment_by_segment = True  # set to False for traditional sequential optimization
+
     farm.add_obstacle((8, 10), (12, 30))
     farm.add_obstacle((20, 10), (24, 30))
     farm.add_obstacle((8, 35), (24, 45))
     farm.add_obstacle((28, 15), (32, 25))
     farm.add_obstacle((15, 48), (19, 58))
-    
+
     return farm
 
 
@@ -393,12 +452,20 @@ def visualize_ant_farm(farm, iterations=100): # change interations to add or sho
         ax1.imshow(farm.obstacles, cmap='Greys', alpha=0.3)
         
         if farm.sequential:
-            ax1.set_title(f'Iteration {iter_count[0]}: Sequential Routes', fontsize=14)
-            
-            for route in result:
-                if route:
-                    ra = np.array(route)
-                    ax1.plot(ra[:, 1], ra[:, 0], 'b-', alpha=0.3, linewidth=0.5)
+            mode_str = 'Segment-by-Segment' if farm.segment_by_segment else 'Sequential'
+            ax1.set_title(f'Iteration {iter_count[0]}: {mode_str} Routes', fontsize=14)
+
+            if farm.segment_by_segment:
+                # show individual segments being optimized
+                for seg in result:
+                    if seg:
+                        sa = np.array(seg)
+                        ax1.plot(sa[:, 1], sa[:, 0], 'b-', alpha=0.3, linewidth=0.5)
+            else:
+                for route in result:
+                    if route:
+                        ra = np.array(route)
+                        ax1.plot(ra[:, 1], ra[:, 0], 'b-', alpha=0.3, linewidth=0.5)
             
             ax1.plot(farm.start[1], farm.start[0], 'go', markersize=15, label='Start')
             for idx, e in enumerate(farm.ends):
