@@ -64,15 +64,19 @@ def create_my_production_floor():
 
 
 # loads layout from csv file with values 0 = free, 1 = obstacle, 2 = start, 3 = ends
-def create_from_csv_file(fn='floor_layout.csv'):
+def create_from_csv_file(fn='floor_layout.csv', sequential=True, return_to_start=False):
     print(f"\n3: CSV Layout from {fn}")
-    
+
     try:
         layout = np.loadtxt(fn, delimiter=',', dtype=int)
-        
+
         f = AntFarm(grid_size=layout.shape)
         f.load_custom_layout(layout)
-        
+
+        # set sequential routing options after loading layout
+        f.sequential = sequential
+        f.return_to_start = return_to_start
+
         print(f"Layout loaded: {layout.shape[0]} x {layout.shape[1]} grid")
         return f
         
@@ -94,6 +98,11 @@ def create_from_csv_file(fn='floor_layout.csv'):
         
         f = AntFarm(grid_size=ex.shape)
         f.load_custom_layout(ex)
+
+        # set sequential routing options after loading layout
+        f.sequential = sequential
+        f.return_to_start = return_to_start
+
         return f
 
 
